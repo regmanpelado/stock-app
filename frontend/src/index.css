@@ -1,0 +1,42 @@
+/* ── Tokens de color ────────────────────────────────────────────────────── */
+:root {
+  --bg:     #0f172a;   /* fondo de página           */
+  --su:     #1e293b;   /* superficie / cards        */
+  --bd:     #334155;   /* bordes                    */
+  --tx:     #e2e8f0;   /* texto primario            */
+  --th:     #f1f5f9;   /* títulos / headings        */
+  --ts:     #94a3b8;   /* texto secundario / soft   */
+  --td:     #64748b;   /* texto atenuado / dim      */
+  --t2:     #475569;   /* texto muy atenuado        */
+  --accent: #38bdf8;   /* acento azul               */
+}
+
+[data-theme="light"] {
+  --bg:     #f1f5f9;
+  --su:     #ffffff;
+  --bd:     #e2e8f0;
+  --tx:     #1e293b;
+  --th:     #0f172a;
+  --ts:     #475569;
+  --td:     #64748b;
+  --t2:     #94a3b8;
+  --accent: #0369a1;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--bg);
+  color: var(--tx);
+  min-height: 100vh;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--su); }
+::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 3px; }

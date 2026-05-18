@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo oscuro con esquinas redondeadas -->
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <!-- Círculo de gradiente de acento -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#38bdf8" stroke-width="18" opacity="0.25"/>
+  <!-- Símbolo crypto centralizado -->
+  <text x="256" y="340"
+    font-family="system-ui, -apple-system, sans-serif"
+    font-size="260"
+    font-weight="900"
+    text-anchor="middle"
+    fill="#38bdf8">₿</text>
+  <!-- Puntos de acento en las esquinas para maskable safe zone -->
+  <circle cx="80"  cy="432" r="18" fill="#6366f1" opacity="0.6"/>
+  <circle cx="432" cy="432" r="18" fill="#6366f1" opacity="0.6"/>
+</svg>
