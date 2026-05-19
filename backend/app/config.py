@@ -11,6 +11,16 @@ class Settings(BaseSettings):
     # Twelve Data (mercados globales en tiempo real)
     twelve_data_api_key: str = ""
 
+    # Crypto exchanges (heredados del fork, usados por exchange_service/bot_service)
+    binance_api_key:    str = ""
+    binance_secret_key: str = ""
+    coinbase_api_key:   str = ""
+    coinbase_pem_secret: str = ""
+    kraken_api_key:     str = ""
+    kraken_secret_key:  str = ""
+    gate_api_key:       str = ""
+    gate_secret_key:    str = ""
+
     # Auth
     jwt_secret:      str = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_IN_PRODUCTION"
     jwt_expire_days: int = 7
