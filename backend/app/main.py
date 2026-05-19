@@ -51,8 +51,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Stock App API",
-    description="Multi-exchange stock market dashboard usando CCXT + IA",
-    version="1.0.0",
+    description="Dashboard de bolsas globales con bots, señales IA y portfolio",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -162,7 +162,7 @@ async def security_headers_middleware(request: Request, call_next):
 
 @app.get("/")
 async def root():
-    return {"message": "Stock App API", "version": "2.0.0"}
+    return {"message": "Stock App API — Bolsas Globales", "version": "2.0.0"}
 
 
 @app.get("/health")

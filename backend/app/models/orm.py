@@ -179,6 +179,31 @@ class Alert(Base):
         }
 
 
+# ── Portfolio — posiciones manuales ──────────────────────────────────────────
+class Position(Base):
+    __tablename__ = "positions"
+
+    id         = Column(String(36),  primary_key=True)
+    user_id    = Column(String(36),  nullable=False, index=True)
+    symbol     = Column(String(20),  nullable=False)
+    exchange   = Column(String(20),  nullable=False, default="NYSE")
+    name       = Column(String(255), nullable=True)
+    shares     = Column(Float,       nullable=False)
+    avg_price  = Column(Float,       nullable=False)
+    currency   = Column(String(10),  nullable=False, default="USD")
+    created_at = Column(String(50),  nullable=False)
+    notes      = Column(Text,        nullable=True)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id, "user_id": self.user_id,
+            "symbol": self.symbol, "exchange": self.exchange,
+            "name": self.name, "shares": self.shares,
+            "avg_price": self.avg_price, "currency": self.currency,
+            "created_at": self.created_at, "notes": self.notes,
+        }
+
+
 # ── Audit Log ─────────────────────────────────────────────────────────────────
 class AuditLog(Base):
     __tablename__ = "audit_log"

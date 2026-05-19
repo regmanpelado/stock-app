@@ -1,23 +1,27 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from app.services import signals_service
+from app.services.market_service import EXCHANGES
 
 router = APIRouter(prefix="/signals", tags=["signals"])
 
 
-@router.get("/alerts/all")
-async def get_all_alerts(timeframe: str = Query("1h")):
-    return await signals_service.get_all_alerts(timeframe)
-
-
-@router.get("/{exchange}")
-async def get_screener(exchange: str, timeframe: str = Query("1h")):
-    return await signals_service.get_screener(exchange, timeframe)
-
-
-@router.get("/{exchange}/{symbol:path}")
-async def get_symbol_signals(
+@router.get("/screener/{exchange}")
+async def screener(
     exchange: str,
-    symbol: str,
-    timeframe: str = Query("1h"),
+    limit: int = Query(10, ge=1, le=20),
 ):
-    return await signals_service.analyze_symbol(exchange, symbol, timeframe)
+    """Screener técnico de las acciones más populares de una bolsa."""
+    if exchange.upper() not in EXCHANGES:
+        raise HTTPException(404, f"Bolsa '{exchange}' no soportada.")
+    return await signals_service.get_screener(exchange.upper(), limit)
+
+
+@router.get("/{exchange}/{symbol}")
+async def symbol_signals(exchange: str, symbol: str):
+    """Señales técnicas de una acción concreta."""
+    result = await signals_service.get_signals_for_symbol(
+        symbol.upper(), exchange.upper()
+    )
+    if "error" in result:
+        raise HTTPException(400, result["error"])
+    return result
