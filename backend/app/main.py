@@ -34,13 +34,17 @@ def _run_migrations() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import asyncio
-    # 1. Migraciones y seed (síncronos, rápidos)
+    print("[STARTUP] 1 - iniciando migraciones", flush=True)
     _run_migrations()
+    print("[STARTUP] 2 - importando ensure_demo_user", flush=True)
     from app.services.subscription_service import ensure_demo_user, ensure_admin_from_env
+    print("[STARTUP] 3 - llamando ensure_demo_user", flush=True)
     ensure_demo_user()
+    print("[STARTUP] 4 - llamando ensure_admin_from_env", flush=True)
     ensure_admin_from_env()
-    # 2. Bots en background — no bloquea el startup del servidor
+    print("[STARTUP] 5 - creando tarea bots", flush=True)
     asyncio.create_task(bot_service.load_and_resume())
+    print("[STARTUP] 6 - yield", flush=True)
     yield
     # Shutdown: persiste estado final
     from app.services import bot_store
