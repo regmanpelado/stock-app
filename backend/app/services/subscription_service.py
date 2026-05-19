@@ -61,10 +61,14 @@ _DEMO_ID = "demo"
 # ── Init del usuario demo ──────────────────────────────────────────────────────
 
 def ensure_demo_user() -> None:
-    """Crea el usuario demo si no existe en la BD."""
+    """Crea o actualiza el usuario demo en la BD."""
     from app.services.auth_service import hash_password
     with get_session() as s:
-        if s.get(User, _DEMO_ID):
+        existing = s.get(User, _DEMO_ID)
+        if existing:
+            if not existing.password_hash:
+                existing.password_hash = hash_password("demo1234")
+                existing.email = "demo@stockapp.es"
             return
         s.add(User(
             id=_DEMO_ID, email="demo@stockapp.es", nombre="Demo User",
