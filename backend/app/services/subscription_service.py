@@ -62,11 +62,13 @@ _DEMO_ID = "demo"
 
 def ensure_demo_user() -> None:
     """Crea el usuario demo si no existe en la BD."""
+    from app.services.auth_service import hash_password
     with get_session() as s:
         if s.get(User, _DEMO_ID):
             return
         s.add(User(
-            id=_DEMO_ID, email="demo@cryptoapp.es", nombre="Demo User",
+            id=_DEMO_ID, email="demo@stockapp.es", nombre="Demo User",
+            password_hash=hash_password("demo1234"),
             plan="pro_plus", activo=True,
             creado_en=datetime.now(timezone.utc).isoformat(),
             proxima_factura="2026-06-11",
