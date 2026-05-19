@@ -89,16 +89,13 @@ function NavbarAuth() {
 }
 
 const NAV_LINKS = [
-  { to: '/',          label: 'Dashboard', end: true },
+  { to: '/',          label: 'Dashboard',  end: true },
   { to: '/markets',   label: 'Mercados' },
+  { to: '/portfolio', label: 'Portfolio' },
   { to: '/signals',   label: 'Señales' },
   { to: '/bots',      label: 'Bots' },
-  { to: '/guide',     label: 'Guía' },
-  { to: '/portfolio', label: 'Portfolio' },
-  { to: '/orders',    label: 'Órdenes' },
   { to: '/news',      label: 'Noticias' },
   { to: '/backtest',  label: 'Backtest' },
-  { to: '/exchanges', label: 'Mis APIs' },
   { to: '/pricing',   label: 'Planes' },
   { to: '/admin',     label: 'Admin', adminOnly: true },
 ];

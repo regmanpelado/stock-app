@@ -1,257 +1,166 @@
-﻿import React, { useState, useCallback } from 'react';
-import { useFetch } from '../hooks/useExchange.jsx';
-import { signalsApi, predictionsApi } from '../services/api.jsx';
-import SignalBadge from '../components/SignalBadge.jsx';
-import AlertBanner from '../components/AlertBanner.jsx';
-import IndicatorGauge from '../components/IndicatorGauge.jsx';
-import PredictionCard from '../components/PredictionCard.jsx';
+﻿import React, { useState, useEffect } from "react";
+import { signalsApi } from "../services/api.jsx";
 
-const EXCHANGES = ['binance', 'coinbase', 'kraken', 'gateio'];
-const TIMEFRAMES = ['15m', '1h', '4h', '1d'];
-const SIGNAL_FILTERS = ['all', 'buy', 'sell', 'neutral'];
+const EXCHANGES = ["NYSE","NASDAQ","BME","LSE","EURONEXT","XETRA","TSE","HKEX"];
+const EX_LABELS  = { NYSE:"NYSE", NASDAQ:"NASDAQ", BME:"Madrid", LSE:"Londres", EURONEXT:"Paris", XETRA:"Frankfurt", TSE:"Tokio", HKEX:"HK" };
 
-function ScreenerRow({ row, onSelect, selected }) {
-  const isSelected = selected?.symbol === row.symbol && selected?.exchange === row.exchange;
+function SignalBadge({ signal }) {
+  const colors = { BUY:"#4ade80", SELL:"#f87171", NEUTRAL:"#94a3b8" };
   return (
-    <tr
-      onClick={() => onSelect(row)}
-      style={{ cursor: 'pointer', background: isSelected ? '#0f2d44' : undefined }}
-    >
-      <td style={{ fontWeight: 600 }}>{row.symbol}</td>
-      <td style={{ textTransform: 'capitalize', color: 'var(--td)', fontSize: '0.8rem' }}>{row.exchange}</td>
-      <td>${row.price?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? '—'}</td>
-      <td><SignalBadge signal={row.signal} size="sm" /></td>
-      <td>
-        <div style={{ display: 'flex', gap: '0.35rem' }}>
-          <SignalBadge signal={row.indicators?.rsi?.signal ?? 'neutral'} size="sm" />
-          <span style={{ color: 'var(--td)', fontSize: '0.75rem', alignSelf: 'center' }}>
-            {row.indicators?.rsi?.value != null ? row.indicators.rsi.value.toFixed(1) : '—'}
-          </span>
-        </div>
-      </td>
-      <td><SignalBadge signal={row.indicators?.macd?.signal ?? 'neutral'} size="sm" /></td>
-      <td><SignalBadge signal={row.indicators?.bollinger?.signal ?? 'neutral'} size="sm" /></td>
-      <td style={{ color: 'var(--td)', fontSize: '0.75rem' }}>
-        {row.alerts?.length > 0 ? `${row.alerts.length} alerta${row.alerts.length > 1 ? 's' : ''}` : '—'}
-      </td>
-    </tr>
+    <span style={{ padding:"0.2rem 0.6rem", borderRadius:20, fontSize:"0.72rem", fontWeight:700,
+      background: colors[signal]+"22", color: colors[signal], border:`1px solid ${colors[signal]}44` }}>
+      {signal}
+    </span>
   );
 }
 
-function DetailPanel({ row, onClose }) {
-  if (!row) return null;
+function RsiBar({ rsi }) {
+  const color = rsi < 35 ? "#4ade80" : rsi > 65 ? "#f87171" : "#94a3b8";
   return (
-    <div className="card" style={{ position: 'sticky', top: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{row.symbol}</div>
-          <div style={{ color: 'var(--td)', fontSize: '0.8rem', textTransform: 'capitalize' }}>{row.exchange}</div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <SignalBadge signal={row.signal} />
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--td)', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
-        </div>
+    <div style={{ display:"flex", alignItems:"center", gap:"0.4rem" }}>
+      <div style={{ width:60, height:6, background:"var(--bd)", borderRadius:3 }}>
+        <div style={{ width:`${rsi}%`, height:"100%", background:color, borderRadius:3 }} />
       </div>
-
-      <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>
-        ${row.price?.toLocaleString(undefined, { maximumFractionDigits: 4 }) ?? '—'}
-      </div>
-
-      <div style={{ marginBottom: '1rem' }}>
-        <div style={{ fontSize: '0.75rem', color: 'var(--td)', marginBottom: '0.5rem', fontWeight: 600 }}>INDICADORES</div>
-        <IndicatorGauge indicators={row.indicators} />
-      </div>
-
-      {row.indicators?.bollinger && (
-        <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--bg)', borderRadius: 6 }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--td)', marginBottom: '0.4rem', fontWeight: 600 }}>BANDAS DE BOLLINGER</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ color: '#f87171' }}>Superior</div>
-              <div style={{ fontWeight: 600 }}>{row.indicators.bollinger.upper?.toFixed(2) ?? '—'}</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ color: 'var(--ts)' }}>Media</div>
-              <div style={{ fontWeight: 600 }}>{row.indicators.bollinger.middle?.toFixed(2) ?? '—'}</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ color: '#4ade80' }}>Inferior</div>
-              <div style={{ fontWeight: 600 }}>{row.indicators.bollinger.lower?.toFixed(2) ?? '—'}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {row.alerts?.length > 0 && (
-        <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--td)', marginBottom: '0.5rem', fontWeight: 600 }}>ALERTAS ACTIVAS</div>
-          <AlertBanner alerts={row.alerts} />
-        </div>
-      )}
+      <span style={{ fontSize:"0.78rem", color, fontWeight:600 }}>{rsi?.toFixed(0)}</span>
     </div>
   );
 }
 
 export default function Signals() {
-  const [exchange, setExchange] = useState('binance');
-  const [timeframe, setTimeframe] = useState('1h');
-  const [signalFilter, setSignalFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState(null);
+  const [exchange,  setExchange]  = useState("NYSE");
+  const [screener,  setScreener]  = useState([]);
+  const [loading,   setLoading]   = useState(false);
+  const [symbol,    setSymbol]    = useState("");
+  const [detail,    setDetail]    = useState(null);
+  const [loadingDet,setLoadingDet]= useState(false);
 
-  const fetchScreener = useCallback(
-    () => signalsApi.getScreener(exchange, timeframe),
-    [exchange, timeframe]
-  );
-  const { data: screener, loading, error, reload } = useFetch(fetchScreener, [exchange, timeframe]);
+  const loadScreener = (ex) => {
+    setExchange(ex); setLoading(true);
+    signalsApi.getScreener(ex, 10)
+      .then(setScreener).catch(() => setScreener([]))
+      .finally(() => setLoading(false));
+  };
 
-  const fetchAlerts = useCallback(() => signalsApi.getAllAlerts(timeframe), [timeframe]);
-  const { data: globalAlerts } = useFetch(fetchAlerts, [timeframe]);
+  useEffect(() => { loadScreener("NYSE"); }, []);
 
-  const fetchPreds = useCallback(() => predictionsApi.getBTC(timeframe), [timeframe]);
-  const { data: btcPreds, loading: predsLoading } = useFetch(fetchPreds, [timeframe]);
-
-  const rows = Array.isArray(screener) ? screener : [];
-  const filtered = rows.filter(r => {
-    const matchSignal = signalFilter === 'all' || r.signal === signalFilter;
-    const matchSearch = r.symbol.toLowerCase().includes(search.toLowerCase());
-    return matchSignal && matchSearch;
-  });
-
-  const buyCount  = rows.filter(r => r.signal === 'buy').length;
-  const sellCount = rows.filter(r => r.signal === 'sell').length;
-  const neutCount = rows.filter(r => r.signal === 'neutral').length;
+  const loadDetail = () => {
+    if (!symbol.trim()) return;
+    setLoadingDet(true); setDetail(null);
+    signalsApi.getSymbol(exchange, symbol.toUpperCase())
+      .then(setDetail).catch(() => setDetail({ error:"No se encontraron datos" }))
+      .finally(() => setLoadingDet(false));
+  };
 
   return (
     <div>
-      <h1 className="page-title">Señales Técnicas</h1>
+      <h1 className="page-title">Senales Tecnicas</h1>
 
-      {/* ── Predicciones IA ─────────────────────────────────────────────── */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.875rem' }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.2rem 0.6rem',
-            borderRadius: 4, background: '#a78bfa22', color: '#a78bfa', border: '1px solid #a78bfa44' }}>
-            IA PRO+
-          </span>
-          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--tx)' }}>
-            Predicciones BTC — Modelo GBR (LSTM-style)
-          </span>
-          {predsLoading && <span style={{ fontSize: '0.75rem', color: 'var(--td)' }}>calculando...</span>}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-          {predsLoading
-            ? [1, 2, 3].map(i => <PredictionCard key={i} loading />)
-            : Array.isArray(btcPreds)
-              ? btcPreds.map((p, i) => <PredictionCard key={i} pred={p} />)
-              : null}
-        </div>
+      {/* Tabs bolsas */}
+      <div style={{ display:"flex", gap:"0.4rem", flexWrap:"wrap", marginBottom:"1.25rem" }}>
+        {EXCHANGES.map(ex => (
+          <button key={ex} className="btn" onClick={() => loadScreener(ex)}
+            style={{ fontSize:"0.78rem", padding:"0.25rem 0.65rem",
+              background: exchange===ex ? "#0284c7":"var(--su)",
+              color: exchange===ex ? "#fff":"var(--ts)", border:"1px solid var(--bd)" }}>
+            {EX_LABELS[ex]}
+          </button>
+        ))}
       </div>
 
-      {/* Alertas globales */}
-      {globalAlerts?.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>
-            ALERTAS ACTIVAS ({globalAlerts.length})
-          </div>
-          <AlertBanner alerts={globalAlerts.slice(0, 6)} />
+      {/* Buscar simbolo concreto */}
+      <div className="card" style={{ padding:"0.85rem 1rem", marginBottom:"1.25rem", display:"flex", gap:"0.5rem" }}>
+        <input className="form-input" placeholder="Analizar simbolo... (ej: AAPL)"
+          value={symbol} onChange={e => setSymbol(e.target.value)}
+          onKeyDown={e => e.key==="Enter" && loadDetail()} style={{ flex:1 }} />
+        <button className="btn btn-primary" onClick={loadDetail} disabled={loadingDet || !symbol.trim()}>
+          {loadingDet ? "..." : "Analizar"}
+        </button>
+      </div>
+
+      {/* Detalle de un simbolo */}
+      {detail && (
+        <div className="card" style={{ padding:"1.25rem", marginBottom:"1.25rem" }}>
+          {detail.error ? (
+            <div style={{ color:"#f87171" }}>{detail.error}</div>
+          ) : (
+            <>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem", flexWrap:"wrap", gap:"0.5rem" }}>
+                <div>
+                  <span style={{ fontSize:"1.2rem", fontWeight:800, color:"#38bdf8" }}>{detail.symbol}</span>
+                  <span style={{ marginLeft:"0.75rem" }}><SignalBadge signal={detail.signal} /></span>
+                </div>
+                <div style={{ fontSize:"1.1rem", fontWeight:700, color:"var(--tx)" }}>
+                  ${detail.price?.toFixed(2)}
+                  <span style={{ fontSize:"0.85rem", marginLeft:"0.5rem", color: detail.change_pct>=0?"#4ade80":"#f87171" }}>
+                    {detail.change_pct>=0?"+":""}{detail.change_pct?.toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(140px,1fr))", gap:"0.75rem" }}>
+                {[
+                  { label:"RSI (14)", value:<RsiBar rsi={detail.rsi} /> },
+                  { label:"MACD", value:<span style={{ color: detail.macd?.histogram>0?"#4ade80":"#f87171", fontWeight:700 }}>{detail.macd?.histogram?.toFixed(4)}</span> },
+                  { label:"SMA 20", value:<span style={{ color: detail.above_sma20?"#4ade80":"#f87171" }}>${detail.sma20?.toFixed(2)}</span> },
+                  { label:"SMA 50", value:<span style={{ color: detail.above_sma50?"#4ade80":"#f87171" }}>${detail.sma50?.toFixed(2)}</span> },
+                  { label:"SMA 200", value:<span style={{ color: detail.above_sma200?"#4ade80":"#f87171" }}>${detail.sma200?.toFixed(2)}</span> },
+                ].map(item => (
+                  <div key={item.label} style={{ background:"var(--bg)", borderRadius:6, padding:"0.6rem 0.75rem", border:"1px solid var(--bd)" }}>
+                    <div style={{ fontSize:"0.7rem", color:"var(--td)", marginBottom:4, fontWeight:600 }}>{item.label}</div>
+                    <div>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Controles */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
-        <select className="form-select" style={{ width: 140 }} value={exchange} onChange={e => { setExchange(e.target.value); setSelected(null); }}>
-          {EXCHANGES.map(ex => <option key={ex} value={ex}>{ex}</option>)}
-        </select>
-        <select className="form-select" style={{ width: 90 }} value={timeframe} onChange={e => setTimeframe(e.target.value)}>
-          {TIMEFRAMES.map(tf => <option key={tf} value={tf}>{tf}</option>)}
-        </select>
-        <input
-          className="form-input"
-          style={{ flex: 1, minWidth: 160 }}
-          placeholder="Buscar par..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <div style={{ display: 'flex', gap: '0.35rem' }}>
-          {SIGNAL_FILTERS.map(f => (
-            <button
-              key={f}
-              onClick={() => setSignalFilter(f)}
-              className="btn"
-              style={{
-                background: signalFilter === f ? '#0284c7' : 'var(--su)',
-                color: signalFilter === f ? 'white' : 'var(--ts)',
-                border: '1px solid #334155',
-                padding: '0.4rem 0.85rem',
-                fontSize: '0.8rem',
-                textTransform: 'capitalize',
-              }}
-            >
-              {f === 'all' ? 'Todos' : f === 'buy' ? 'Compra' : f === 'sell' ? 'Venta' : 'Neutro'}
-            </button>
-          ))}
+      {/* Screener */}
+      <div className="card" style={{ padding:"1rem" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"0.75rem" }}>
+          <h3 style={{ fontSize:"0.85rem", color:"var(--td)", fontWeight:600 }}>
+            SCREENER — {EX_LABELS[exchange]}
+          </h3>
+          <button className="btn" style={{ fontSize:"0.78rem" }} onClick={() => loadScreener(exchange)}>Actualizar</button>
         </div>
-        <button className="btn btn-primary" onClick={reload}>Actualizar</button>
-      </div>
-
-      {/* Resumen de señales */}
-      {!loading && rows.length > 0 && (
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          {[
-            { label: 'Compra', count: buyCount,  color: '#4ade80', bg: '#14532d' },
-            { label: 'Venta',  count: sellCount, color: '#f87171', bg: '#450a0a' },
-            { label: 'Neutro', count: neutCount, color: 'var(--ts)', bg: 'var(--su)' },
-          ].map(s => (
-            <div key={s.label} className="card" style={{ flex: 1, textAlign: 'center', background: s.bg, border: `1px solid ${s.color}33`, cursor: 'pointer' }}
-              onClick={() => setSignalFilter(signalFilter === s.label.toLowerCase() ? 'all' : s.label.toLowerCase())}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: s.color }}>{s.count}</div>
-              <div style={{ fontSize: '0.75rem', color: s.color }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {loading && <p className="loading">Calculando señales...</p>}
-      {error && <p className="error-msg">{error}</p>}
-
-      {!loading && !error && (
-        <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 340px' : '1fr', gap: '1rem', alignItems: 'start' }}>
-          {/* Screener table */}
-          <div className="card" style={{ overflowX: 'auto' }}>
-            <table className="table">
+        {loading ? (
+          <p style={{ color:"var(--td)", fontSize:"0.85rem" }}>Calculando senales... (puede tardar unos segundos)</p>
+        ) : (
+          <div style={{ overflowX:"auto" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"0.84rem" }}>
               <thead>
-                <tr>
-                  <th>Par</th>
-                  <th>Exchange</th>
-                  <th>Precio</th>
-                  <th>Señal</th>
-                  <th>RSI</th>
-                  <th>MACD</th>
-                  <th>Bollinger</th>
-                  <th>Alertas</th>
+                <tr style={{ color:"var(--td)", fontSize:"0.72rem" }}>
+                  {["Simbolo","Precio","Cambio","Senal","RSI","MACD","SMA20","SMA50"].map(h => (
+                    <th key={h} style={{ textAlign:"left", padding:"0.4rem 0.6rem", fontWeight:600, background:"var(--su)", borderBottom:"1px solid var(--bd)" }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--td)' }}>Sin resultados</td></tr>
-                ) : (
-                  filtered.map(row => (
-                    <ScreenerRow
-                      key={`${row.exchange}-${row.symbol}`}
-                      row={row}
-                      onSelect={r => setSelected(prev => prev?.symbol === r.symbol && prev?.exchange === r.exchange ? null : r)}
-                      selected={selected}
-                    />
-                  ))
+                {screener.map(row => (
+                  <tr key={row.symbol} style={{ borderBottom:"1px solid var(--bd)", cursor:"pointer" }}
+                    onClick={() => { setSymbol(row.symbol); setDetail(row); }}>
+                    <td style={{ padding:"0.5rem 0.6rem", fontWeight:700, color:"#38bdf8" }}>{row.symbol}</td>
+                    <td style={{ padding:"0.5rem 0.6rem", color:"var(--ts)" }}>${row.price?.toFixed(2)}</td>
+                    <td style={{ padding:"0.5rem 0.6rem", fontWeight:700, color: row.change_pct>=0?"#4ade80":"#f87171" }}>
+                      {row.change_pct>=0?"+":""}{row.change_pct?.toFixed(2)}%
+                    </td>
+                    <td style={{ padding:"0.5rem 0.6rem" }}><SignalBadge signal={row.signal} /></td>
+                    <td style={{ padding:"0.5rem 0.6rem" }}><RsiBar rsi={row.rsi} /></td>
+                    <td style={{ padding:"0.5rem 0.6rem", color: row.macd?.histogram>0?"#4ade80":"#f87171", fontWeight:600 }}>
+                      {row.macd?.histogram?.toFixed(4)}
+                    </td>
+                    <td style={{ padding:"0.5rem 0.6rem", color: row.above_sma20?"#4ade80":"#f87171" }}>${row.sma20?.toFixed(2)}</td>
+                    <td style={{ padding:"0.5rem 0.6rem", color: row.above_sma50?"#4ade80":"#f87171" }}>${row.sma50?.toFixed(2)}</td>
+                  </tr>
+                ))}
+                {screener.length === 0 && (
+                  <tr><td colSpan={8} style={{ padding:"2rem", textAlign:"center", color:"var(--td)" }}>Sin datos disponibles</td></tr>
                 )}
               </tbody>
             </table>
           </div>
-
-          {/* Panel de detalle */}
-          {selected && <DetailPanel row={selected} onClose={() => setSelected(null)} />}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
