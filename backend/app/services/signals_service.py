@@ -1,11 +1,10 @@
 """Señales técnicas para acciones usando yfinance + numpy."""
 import asyncio
-import yfinance as yf
-import numpy as np
 from app.services.market_service import _full_symbol, _safe_float, POPULAR
 
 
 def _rsi(closes: list, period: int = 14) -> float:
+    import numpy as np
     if len(closes) < period + 1:
         return 50.0
     deltas = np.diff(closes)
@@ -19,15 +18,17 @@ def _rsi(closes: list, period: int = 14) -> float:
     return round(100 - (100 / (1 + rs)), 2)
 
 
-def _ema(data: np.ndarray, span: int) -> np.ndarray:
+def _ema(data, span: int):
     k = 2 / (span + 1)
     result = [data[0]]
     for v in data[1:]:
         result.append(v * k + result[-1] * (1 - k))
+    import numpy as np
     return np.array(result)
 
 
 def _macd(closes: list) -> dict:
+    import numpy as np
     if len(closes) < 26:
         return {"macd": 0.0, "signal": 0.0, "histogram": 0.0}
     arr     = np.array(closes, dtype=float)
@@ -41,12 +42,14 @@ def _macd(closes: list) -> dict:
 
 
 def _sma(closes: list, period: int) -> float:
+    import numpy as np
     if len(closes) < period:
         return round(float(closes[-1]), 4) if closes else 0.0
     return round(float(np.mean(closes[-period:])), 4)
 
 
 def _signal_for_symbol(symbol: str, exchange: str = "NYSE") -> dict:
+    import yfinance as yf
     full = _full_symbol(symbol, exchange)
     hist = yf.Ticker(full).history(period="6mo", interval="1d")
 
@@ -73,7 +76,7 @@ def _signal_for_symbol(symbol: str, exchange: str = "NYSE") -> dict:
 
     signal = "BUY" if bull >= 3 else ("SELL" if bear >= 3 else "NEUTRAL")
 
-    info = yf.Ticker(full).fast_info
+    info = yf.Ticker(full).fast_info  # yf already imported above
     prev = _safe_float(info.previous_close)
     change_pct = round((last - prev) / prev * 100, 2) if prev else 0.0
 

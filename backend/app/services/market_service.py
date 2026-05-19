@@ -1,6 +1,5 @@
 """Servicio de datos de mercado para bolsas globales usando yfinance."""
 import asyncio
-import yfinance as yf
 
 # ── Bolsas con sufijos yfinance ───────────────────────────────────────────────
 EXCHANGES = {
@@ -87,6 +86,7 @@ async def get_quote(symbol: str, exchange: str = "NYSE") -> dict:
     loop = asyncio.get_event_loop()
 
     def _fetch():
+        import yfinance as yf
         t = yf.Ticker(full)
         info = t.fast_info
         prev = _safe_float(info.previous_close)
@@ -116,6 +116,7 @@ async def get_history(symbol: str, exchange: str = "NYSE",
     loop = asyncio.get_event_loop()
 
     def _fetch():
+        import yfinance as yf
         hist = yf.Ticker(full).history(period=period, interval=interval)
         return [
             {
@@ -138,6 +139,7 @@ async def get_indices() -> list[dict]:
 
     def _fetch():
         result = []
+        import yfinance as yf
         for ticker, meta in INDICES.items():
             try:
                 info = yf.Ticker(ticker).fast_info
@@ -164,6 +166,7 @@ async def get_currencies() -> list[dict]:
 
     def _fetch():
         result = []
+        import yfinance as yf
         for ticker, meta in CURRENCIES.items():
             try:
                 info = yf.Ticker(ticker).fast_info
@@ -189,6 +192,7 @@ async def get_sectors() -> list[dict]:
 
     def _fetch():
         result = []
+        import yfinance as yf
         for name, etf in SECTORS.items():
             try:
                 info = yf.Ticker(etf).fast_info
@@ -214,6 +218,7 @@ async def get_popular(exchange: str) -> list[dict]:
 
     def _fetch():
         result = []
+        import yfinance as yf
         for sym in symbols:
             try:
                 info = yf.Ticker(sym).fast_info
@@ -245,6 +250,7 @@ async def search_stocks(query: str) -> list[dict]:
             if not q.endswith(suffix):
                 candidates.append(q + suffix)
 
+        import yfinance as yf
         for sym in candidates[:5]:
             try:
                 t = yf.Ticker(sym)
