@@ -124,7 +124,7 @@ function AppLayout() {
   return (
     <div className="app">
       <nav className="navbar">
-        <div className="navbar-brand">Crypto App</div>
+        <div className="navbar-brand">Stock App</div>
 
         {/* Links horizontales — desktop */}
         {isAuthenticated && (

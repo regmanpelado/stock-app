@@ -57,7 +57,7 @@ export default function InstallBanner() {
       {/* Texto */}
       <div style={{ flex: 1, minWidth: 180 }}>
         <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#e2e8f0' }}>
-          Instala Crypto App
+          Instala Stock App
         </div>
         <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
           Accede más rápido desde tu pantalla de inicio

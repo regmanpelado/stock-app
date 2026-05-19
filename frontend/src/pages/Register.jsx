@@ -39,7 +39,7 @@ export default function Register() {
       <div className="auth-page">
         <div className="auth-card card">
           <div className="auth-header">
-            <div className="auth-logo">Crypto App</div>
+            <div className="auth-logo">Stock App</div>
             <h1 className="auth-title">Revisa tu email</h1>
           </div>
           <p style={{ color: 'var(--ts)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
@@ -57,7 +57,7 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-header">
-          <div className="auth-logo">Crypto App</div>
+          <div className="auth-logo">Stock App</div>
           <h1 className="auth-title">Crear cuenta</h1>
         </div>
 

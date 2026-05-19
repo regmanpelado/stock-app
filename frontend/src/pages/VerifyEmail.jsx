@@ -18,7 +18,7 @@ export default function VerifyEmail() {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-header">
-          <div className="auth-logo">Crypto App</div>
+          <div className="auth-logo">Stock App</div>
           <h1 className="auth-title">
             {status === 'loading' && 'Verificando...'}
             {status === 'success' && 'Email verificado'}

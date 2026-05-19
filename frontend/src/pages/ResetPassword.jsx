@@ -39,7 +39,7 @@ export default function ResetPassword() {
       <div className="auth-page">
         <div className="auth-card card">
           <div className="auth-header">
-            <div className="auth-logo">Crypto App</div>
+            <div className="auth-logo">Stock App</div>
             <h1 className="auth-title">Enlace inválido</h1>
           </div>
           <p style={{ color: 'var(--ts)', marginBottom: '1.5rem' }}>
@@ -58,7 +58,7 @@ export default function ResetPassword() {
       <div className="auth-page">
         <div className="auth-card card">
           <div className="auth-header">
-            <div className="auth-logo">Crypto App</div>
+            <div className="auth-logo">Stock App</div>
             <h1 className="auth-title">Contraseña actualizada</h1>
           </div>
           <p style={{ color: 'var(--ts)', marginBottom: '1.5rem' }}>
@@ -76,7 +76,7 @@ export default function ResetPassword() {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-header">
-          <div className="auth-logo">Crypto App</div>
+          <div className="auth-logo">Stock App</div>
           <h1 className="auth-title">Nueva contraseña</h1>
         </div>
 

@@ -27,7 +27,7 @@ export default function ForgotPassword() {
       <div className="auth-page">
         <div className="auth-card card">
           <div className="auth-header">
-            <div className="auth-logo">Crypto App</div>
+            <div className="auth-logo">Stock App</div>
             <h1 className="auth-title">Email enviado</h1>
           </div>
           <p style={{ color: 'var(--ts)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
@@ -45,7 +45,7 @@ export default function ForgotPassword() {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-header">
-          <div className="auth-logo">Crypto App</div>
+          <div className="auth-logo">Stock App</div>
           <h1 className="auth-title">Recuperar contraseña</h1>
         </div>
         <p style={{ color: 'var(--ts)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>

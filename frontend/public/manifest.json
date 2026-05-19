@@ -1,7 +1,7 @@
 {
-  "name": "Crypto App",
+  "name": "Stock App",
   "short_name": "Crypto",
-  "description": "Dashboard de trading crypto con bots, señales y predicciones IA",
+  "description": "Dashboard de bolsa global con bots, señales y predicciones IA",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

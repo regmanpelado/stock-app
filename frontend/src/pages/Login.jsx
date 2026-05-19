@@ -61,7 +61,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-header">
-          <div className="auth-logo">Crypto App</div>
+          <div className="auth-logo">Stock App</div>
           <h1 className="auth-title">
             {step === 'credentials' ? 'Iniciar sesión' : 'Verificación 2FA'}
           </h1>
