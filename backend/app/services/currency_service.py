@@ -1,6 +1,5 @@
-"""Tipo de cambio EUR/USD en tiempo real desde Kraken."""
+"""Tipo de cambio EUR/USD en tiempo real desde yfinance."""
 import time
-from app.services.exchange_service import fetch_ticker
 
 _cache: dict = {}
 _CACHE_TTL = 300  # 5 minutos
@@ -8,25 +7,20 @@ _CACHE_TTL = 300  # 5 minutos
 
 async def get_eurusd_rate() -> float:
     """Devuelve el precio de 1 EUR en USD (ej: 1.09)."""
+    import asyncio
     now = time.time()
     if _cache.get("ts") and now - _cache["ts"] < _CACHE_TTL:
         return _cache["rate"]
 
-    # Método 1: par EUR/USD directo en Kraken
     try:
-        ticker = await fetch_ticker("kraken", "EUR/USD")
-        rate = float(ticker["last"])
-        if 0.5 < rate < 2.0:
-            _cache.update({"rate": rate, "ts": now})
-            return rate
-    except Exception:
-        pass
+        loop = asyncio.get_event_loop()
 
-    # Método 2: derivar de BTC/EUR y BTC/USDT
-    try:
-        btc_usd = await fetch_ticker("binance", "BTC/USDT")
-        btc_eur = await fetch_ticker("kraken",  "BTC/EUR")
-        rate = float(btc_usd["last"]) / float(btc_eur["last"])
+        def _fetch():
+            import yfinance as yf
+            info = yf.Ticker("EURUSD=X").fast_info
+            return float(info.last_price or 0)
+
+        rate = await loop.run_in_executor(None, _fetch)
         if 0.5 < rate < 2.0:
             _cache.update({"rate": rate, "ts": now})
             return rate

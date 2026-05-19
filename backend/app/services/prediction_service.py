@@ -7,7 +7,7 @@ from sklearn.model_selection import cross_val_score
 from datetime import datetime, timezone
 
 from app.services.signals_service import compute_rsi, compute_macd, compute_bollinger
-from app.services.exchange_service import fetch_ohlcv
+from app.services.backtest_service import fetch_ohlcv
 
 # ── Caché de modelos (TTL 1 hora por símbolo/timeframe) ───────────────────────
 _cache: dict[str, dict] = {}

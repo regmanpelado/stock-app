@@ -104,6 +104,30 @@ async def get_signals_for_symbol(symbol: str, exchange: str = "NYSE") -> dict:
     )
 
 
+# ── Compatibilidad con backtest_service y prediction_service ─────────────────
+
+def compute_rsi(closes: list, period: int = 14) -> float:
+    return _rsi(closes, period)
+
+
+def compute_macd(closes: list):
+    """Devuelve (macd, signal, histogram) para compatibilidad legacy."""
+    result = _macd(closes)
+    return result["macd"], result["signal"], result["histogram"]
+
+
+def compute_bollinger(closes: list, period: int = 20, num_std: float = 2.0):
+    """Bandas de Bollinger: devuelve (upper, middle, lower)."""
+    import numpy as np
+    if len(closes) < period:
+        p = closes[-1] if closes else 0.0
+        return p, p, p
+    arr    = closes[-period:]
+    middle = float(np.mean(arr))
+    std    = float(np.std(arr))
+    return middle + num_std * std, middle, middle - num_std * std
+
+
 async def get_screener(exchange: str, limit: int = 10) -> list[dict]:
     """Screener técnico para las acciones populares de una bolsa."""
     symbols = POPULAR.get(exchange.upper(), POPULAR["NYSE"])[:limit]

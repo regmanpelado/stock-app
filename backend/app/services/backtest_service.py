@@ -1,7 +1,29 @@
-"""Motor de backtesting: DCA, Grid, Señales e IA Dinámico sobre datos OHLCV históricos."""
+"""Motor de backtesting: DCA, Señales sobre datos OHLCV históricos."""
 from datetime import datetime, timezone
-from app.services.exchange_service import fetch_ohlcv
 from app.services.signals_service import compute_rsi, compute_macd, compute_bollinger
+
+
+async def fetch_ohlcv(exchange: str, symbol: str, timeframe: str = "1d", limit: int = 365):
+    """Adaptador: obtiene OHLCV de yfinance para backtesting de acciones."""
+    import yfinance as yf
+    period_map = {"1m": "1mo", "5m": "3mo", "15m": "3mo", "1h": "6mo",
+                  "4h": "1y", "1d": "2y", "1w": "5y"}
+    period = period_map.get(timeframe, "1y")
+    interval_map = {"1m": "1m", "5m": "5m", "15m": "15m", "1h": "1h",
+                    "4h": "1h", "1d": "1d", "1w": "1wk"}
+    interval = interval_map.get(timeframe, "1d")
+    from app.services.market_service import _full_symbol
+    full = _full_symbol(symbol, exchange) if symbol else symbol
+    hist = yf.Ticker(full).history(period=period, interval=interval)
+    if hist.empty:
+        return []
+    return [
+        {"timestamp": int(idx.timestamp() * 1000),
+         "open": float(row.Open), "high": float(row.High),
+         "low": float(row.Low), "close": float(row.Close),
+         "volume": int(row.Volume)}
+        for idx, row in hist.iterrows()
+    ]
 
 PERIOD_LIMITS = {"1m": 30, "3m": 90, "6m": 180, "1y": 365}
 
