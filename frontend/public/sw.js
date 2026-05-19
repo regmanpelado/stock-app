@@ -1,8 +1,8 @@
-const CACHE   = 'crypto-app-v6';
+const CACHE   = 'stock-app-v1';
 const SHELL   = '/index.html';
 
 // Hostname del backend — sus respuestas nunca se cachean
-const API_HOST = 'crypto-app-production-83a0.up.railway.app';
+const API_HOST = 'backend-production-63370.up.railway.app';
 
 function isApiRequest(url) {
   return url.hostname === API_HOST || url.pathname.startsWith('/auth/') ||
