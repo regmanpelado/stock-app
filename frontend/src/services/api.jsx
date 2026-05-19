@@ -138,6 +138,20 @@ export const authApi = {
   refresh:        () => api.post('/auth/refresh').then(r => r.data),
 };
 
+// ── Claves de exchange / Alpaca ───────────────────────────────────────────────
+export const exchangeKeysApi = {
+  list:    ()                                      => api.get('/exchange-keys/').then(r => r.data),
+  upsert:  (exchange, api_key, api_secret, label) => api.post('/exchange-keys/', { exchange, api_key, api_secret, label }).then(r => r.data),
+  delete:  (exchange)                              => api.delete(`/exchange-keys/${exchange}`).then(r => r.data),
+  test:    (exchange)                              => api.get(`/exchange-keys/${exchange}/test`).then(r => r.data),
+};
+
+// ── Predicciones (legacy) ─────────────────────────────────────────────────────
+export const predictionsApi = {
+  getSymbol: (exchange, symbol, timeframe = '1d', horizon = 5) =>
+    api.get(`/predictions/${exchange}/${encodeURIComponent(symbol)}`, { params: { timeframe, horizon } }).then(r => r.data),
+};
+
 // ── Backtest ──────────────────────────────────────────────────────────────────
 export const backtestApi = {
   run: (payload) => api.post('/backtest/run', payload).then(r => r.data),

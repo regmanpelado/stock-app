@@ -17,7 +17,6 @@ import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate, useLocati
 import Dashboard     from './pages/Dashboard';
 import Markets       from './pages/Markets';
 import Portfolio     from './pages/Portfolio';
-import Orders        from './pages/Orders';
 import Signals       from './pages/Signals';
 import Bots          from './pages/Bots';
 import Pricing       from './pages/Pricing';
@@ -30,8 +29,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword  from './pages/ResetPassword';
 import VerifyEmail    from './pages/VerifyEmail';
 import Profile       from './pages/Profile';
-import BotGuide     from './pages/BotGuide';
-import ExchangeKeys   from './pages/ExchangeKeys';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel  from './pages/PaymentCancel';
 import PrivateRoute    from './components/PrivateRoute';
@@ -172,12 +169,9 @@ function AppLayout() {
           <Route path="/markets"   element={<PrivateRoute><Markets /></PrivateRoute>} />
           <Route path="/signals"   element={<PrivateRoute><Signals /></PrivateRoute>} />
           <Route path="/bots"      element={<PrivateRoute><Bots /></PrivateRoute>} />
-          <Route path="/guide"     element={<PrivateRoute><BotGuide /></PrivateRoute>} />
           <Route path="/portfolio" element={<PrivateRoute><Portfolio /></PrivateRoute>} />
-          <Route path="/orders"    element={<PrivateRoute><Orders /></PrivateRoute>} />
           <Route path="/news"      element={<PrivateRoute><News /></PrivateRoute>} />
           <Route path="/backtest"  element={<PrivateRoute><Backtest /></PrivateRoute>} />
-          <Route path="/exchanges" element={<PrivateRoute><ExchangeKeys /></PrivateRoute>} />
           <Route path="/pricing"   element={<PrivateRoute><Pricing /></PrivateRoute>} />
           <Route path="/admin"           element={<PrivateRoute><Admin /></PrivateRoute>} />
           <Route path="/profile"        element={<PrivateRoute><Profile /></PrivateRoute>} />
