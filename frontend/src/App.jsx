@@ -1,4 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
+
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: '2rem', color: '#f87171', fontFamily: 'monospace', background: '#0f172a', minHeight: '100vh' }}>
+        <h2>Error al cargar la aplicación:</h2>
+        <pre style={{ marginTop: '1rem', whiteSpace: 'pre-wrap' }}>{String(this.state.error)}</pre>
+      </div>
+    );
+    return this.props.children;
+  }
+}
 import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import Dashboard     from './pages/Dashboard';
 import Markets       from './pages/Markets';
@@ -180,12 +194,14 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <AppLayout />
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router>
+            <AppLayout />
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
