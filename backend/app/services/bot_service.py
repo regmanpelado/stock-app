@@ -1,13 +1,8 @@
-﻿"""
-Servicio de bots de trading para acciones.
-Bots: dca_stock, momentum_stock, signal_stock, rebalance.
-"""
+"""Servicio de bots de trading para acciones: dca_stock, momentum_stock, signal_stock, rebalance."""
 import asyncio
 import uuid
 from datetime import datetime, timezone
-
 from app.services import bot_store
-
 
 _tasks: dict[str, asyncio.Task] = {}
 
@@ -26,16 +21,15 @@ def _safe_float(val, default=0.0) -> float:
 
 # ── CRUD ──────────────────────────────────────────────────────────────────────
 
-def create_bot(bot_type: str, config: dict, sandbox: bool,
-               name: str | None, user_id: str) -> dict:
+def create_bot(bot_type: str, config: dict, sandbox: bool, name, user_id: str) -> dict:
     valid = {"dca_stock", "momentum_stock", "signal_stock", "rebalance"}
     if bot_type not in valid:
-        raise ValueError(f"Tipo no soportado: {bot_type}. Validos: {valid}")
+        raise ValueError(f"Tipo no soportado: {bot_type}")
     default_names = {
-        "dca_stock":      "DCA Acciones",
+        "dca_stock": "DCA Acciones",
         "momentum_stock": "Momentum",
-        "signal_stock":   "Senales RSI/MACD",
-        "rebalance":      "Rebalanceo",
+        "signal_stock": "Senales RSI/MACD",
+        "rebalance": "Rebalanceo",
     }
     bot = {
         "id": str(uuid.uuid4()), "user_id": user_id,
@@ -58,7 +52,7 @@ def get_bot(bot_id: str) -> dict:
     return bot
 
 
-def list_bots(user_id: str | None = None) -> list[dict]:
+def list_bots(user_id=None) -> list:
     bots = bot_store.list_bots()
     if user_id:
         bots = [b for b in bots if b.get("user_id") == user_id]
@@ -111,16 +105,14 @@ async def cleanup_all() -> None:
     _tasks.clear()
 
 
-# ── Loop principal ────────────────────────────────────────────────────────────
-
 async def _run_bot(bot_id: str) -> None:
     try:
         bot = get_bot(bot_id)
         dispatch = {
-            "dca_stock":      _dca_loop,
+            "dca_stock": _dca_loop,
             "momentum_stock": _momentum_loop,
-            "signal_stock":   _signal_loop,
-            "rebalance":      _rebalance_loop,
+            "signal_stock": _signal_loop,
+            "rebalance": _rebalance_loop,
         }
         fn = dispatch.get(bot["type"])
         if not fn:
@@ -164,30 +156,26 @@ async def _dca_loop(bot_id: str) -> None:
         if bot["status"] != "running":
             break
         cfg = bot["config"]
-        symbol   = cfg["symbol"]
+        symbol = cfg["symbol"]
         exchange = cfg.get("exchange", "NYSE")
-        amount   = float(cfg["amount_usd"])
+        amount = float(cfg["amount_usd"])
         interval = int(cfg.get("interval_minutes", 1440))
-        tp_pct   = float(cfg.get("take_profit_pct", 0))
-        sl_pct   = float(cfg.get("stop_loss_pct", 0))
-
+        tp_pct = float(cfg.get("take_profit_pct", 0))
+        sl_pct = float(cfg.get("stop_loss_pct", 0))
         try:
-            from app.services.market_service import get_quote as _get_quote
-            quote  = await _get_quote(symbol, exchange)
-            price  = quote["price"]
+            from app.services.market_service import get_quote
+            quote = await get_quote(symbol, exchange)
+            price = quote["price"]
             shares = round(amount / price, 6)
-
             bot["total_invested"] = round(bot.get("total_invested", 0) + amount, 2)
-            bot["current_value"]  = round(bot.get("current_value", 0) + amount, 2)
+            bot["current_value"] = round(bot.get("current_value", 0) + amount, 2)
             _record_trade(bot, "buy", price, shares, amount)
-
             invested = bot["total_invested"]
             if invested > 0:
                 bot["pnl_pct"] = round((bot["current_value"] - invested) / invested * 100, 2)
-            bot["pnl"]        = round(bot["current_value"] - invested, 2)
+            bot["pnl"] = round(bot["current_value"] - invested, 2)
             bot["last_check"] = _now()
-            bot["stats"]      = {"last_price": price, "shares_total": shares}
-
+            bot["stats"] = {"last_price": price, "shares_total": shares}
             if tp_pct > 0 and bot["pnl_pct"] >= tp_pct:
                 _record_trade(bot, "sell_tp", price, shares, bot["current_value"])
                 bot["status"] = "stopped"
@@ -200,12 +188,10 @@ async def _dca_loop(bot_id: str) -> None:
                 bot["stats"]["exit_reason"] = "stop_loss"
                 bot_store.update_bot(bot)
                 break
-
             bot_store.update_bot(bot)
         except Exception as e:
             bot["error"] = str(e)[:200]
             bot_store.update_bot(bot)
-
         await asyncio.sleep(interval * 60)
 
 
@@ -214,68 +200,63 @@ async def _dca_loop(bot_id: str) -> None:
 async def _momentum_loop(bot_id: str) -> None:
     in_position = False
     entry_price = 0.0
-    max_price   = 0.0
-
+    max_price = 0.0
     while True:
         bot = get_bot(bot_id)
         if bot["status"] != "running":
             break
-        cfg      = bot["config"]
-        symbol   = cfg["symbol"]
+        cfg = bot["config"]
+        symbol = cfg["symbol"]
         exchange = cfg.get("exchange", "NYSE")
-        amount   = float(cfg["amount_usd"])
-        rsi_min  = float(cfg.get("rsi_min", 55))
-        rsi_max  = float(cfg.get("rsi_max", 75))
-        tp_pct   = float(cfg.get("take_profit_pct", 5.0))
-        sl_pct   = float(cfg.get("stop_loss_pct", 3.0))
-        trail    = float(cfg.get("trailing_stop_pct", 2.0))
+        amount = float(cfg["amount_usd"])
+        rsi_min = float(cfg.get("rsi_min", 55))
+        rsi_max_val = float(cfg.get("rsi_max", 75))
+        tp_pct = float(cfg.get("take_profit_pct", 5.0))
+        sl_pct = float(cfg.get("stop_loss_pct", 3.0))
+        trail = float(cfg.get("trailing_stop_pct", 2.0))
         interval = int(cfg.get("check_interval_minutes", 60))
-
         try:
-            loop   = asyncio.get_event_loop()
+            loop = asyncio.get_event_loop()
             closes = await loop.run_in_executor(None, lambda: _get_closes(symbol, exchange))
             if len(closes) < 20:
                 await asyncio.sleep(interval * 60)
                 continue
-
             from app.services.signals_service import _rsi
-            rsi   = _rsi(closes)
+            rsi = _rsi(closes)
             price = closes[-1]
-
             if in_position:
-                max_price   = max(max_price, price)
-                pnl_pct     = (price - entry_price) / entry_price * 100
+                max_price = max(max_price, price)
+                pnl_pct = (price - entry_price) / entry_price * 100
                 trail_trigger = (max_price - price) / max_price * 100
-
                 exit_reason = None
-                if pnl_pct >= tp_pct:       exit_reason = "take_profit"
-                elif pnl_pct <= -sl_pct:    exit_reason = "stop_loss"
-                elif trail_trigger >= trail: exit_reason = "trailing_stop"
-
+                if pnl_pct >= tp_pct:
+                    exit_reason = "take_profit"
+                elif pnl_pct <= -sl_pct:
+                    exit_reason = "stop_loss"
+                elif trail_trigger >= trail:
+                    exit_reason = "trailing_stop"
                 if exit_reason:
                     shares = round(amount / entry_price, 6)
-                    value  = round(shares * price, 2)
+                    value = round(shares * price, 2)
                     _record_trade(bot, "sell", price, shares, value)
-                    bot["pnl"]     = round(value - amount, 2)
+                    bot["pnl"] = round(value - amount, 2)
                     bot["pnl_pct"] = round(pnl_pct, 2)
                     bot["stats"]["exit_reason"] = exit_reason
                     in_position = False
             else:
-                if rsi_min <= rsi <= rsi_max:
+                if rsi_min <= rsi <= rsi_max_val:
                     shares = round(amount / price, 6)
                     _record_trade(bot, "buy", price, shares, amount)
                     bot["total_invested"] = round(bot.get("total_invested", 0) + amount, 2)
                     entry_price = price
-                    max_price   = price
+                    max_price = price
                     in_position = True
-
             bot["last_check"] = _now()
             bot["stats"].update({"rsi": rsi, "price": price, "in_position": in_position})
             bot_store.update_bot(bot)
         except Exception as e:
             bot["error"] = str(e)[:200]
             bot_store.update_bot(bot)
-
         await asyncio.sleep(interval * 60)
 
 
@@ -284,32 +265,28 @@ async def _momentum_loop(bot_id: str) -> None:
 async def _signal_loop(bot_id: str) -> None:
     in_position = False
     entry_price = 0.0
-
     while True:
         bot = get_bot(bot_id)
         if bot["status"] != "running":
             break
-        cfg        = bot["config"]
-        symbol     = cfg["symbol"]
-        exchange   = cfg.get("exchange", "NYSE")
-        amount     = float(cfg["amount_usd"])
-        oversold   = float(cfg.get("rsi_oversold", 35))
+        cfg = bot["config"]
+        symbol = cfg["symbol"]
+        exchange = cfg.get("exchange", "NYSE")
+        amount = float(cfg["amount_usd"])
+        oversold = float(cfg.get("rsi_oversold", 35))
         overbought = float(cfg.get("rsi_overbought", 65))
-        use_macd   = bool(cfg.get("use_macd", True))
-        interval   = int(cfg.get("check_interval_minutes", 60))
-
+        use_macd = bool(cfg.get("use_macd", True))
+        interval = int(cfg.get("check_interval_minutes", 60))
         try:
-            loop   = asyncio.get_event_loop()
+            loop = asyncio.get_event_loop()
             closes = await loop.run_in_executor(None, lambda: _get_closes(symbol, exchange))
             if len(closes) < 26:
                 await asyncio.sleep(interval * 60)
                 continue
-
             from app.services.signals_service import _rsi, _macd
-            rsi   = _rsi(closes)
-            macd  = _macd(closes)
+            rsi = _rsi(closes)
+            macd = _macd(closes)
             price = closes[-1]
-
             if not in_position:
                 buy_signal = rsi < oversold
                 if use_macd:
@@ -326,19 +303,16 @@ async def _signal_loop(bot_id: str) -> None:
                     sell_signal = sell_signal or macd["histogram"] < 0
                 if sell_signal:
                     shares = round(amount / entry_price, 6)
-                    value  = round(shares * price, 2)
+                    value = round(shares * price, 2)
                     _record_trade(bot, "sell", price, shares, value)
                     bot["pnl"] = round(bot.get("pnl", 0) + value - amount, 2)
                     in_position = False
-
             bot["last_check"] = _now()
-            bot["stats"].update({"rsi": rsi, "macd": macd["histogram"],
-                                  "price": price, "in_position": in_position})
+            bot["stats"].update({"rsi": rsi, "macd": macd["histogram"], "price": price, "in_position": in_position})
             bot_store.update_bot(bot)
         except Exception as e:
             bot["error"] = str(e)[:200]
             bot_store.update_bot(bot)
-
         await asyncio.sleep(interval * 60)
 
 
@@ -349,18 +323,17 @@ async def _rebalance_loop(bot_id: str) -> None:
         bot = get_bot(bot_id)
         if bot["status"] != "running":
             break
-        cfg      = bot["config"]
+        cfg = bot["config"]
         exchange = cfg.get("exchange", "NYSE")
-        targets  = cfg.get("targets", {})
-        capital  = float(cfg.get("total_capital_usd", 1000))
+        targets = cfg.get("targets", {})
+        capital = float(cfg.get("total_capital_usd", 1000))
         interval = int(cfg.get("check_interval_minutes", 1440))
-
         try:
             from app.services.market_service import get_quote
             rebalanced = []
             for sym, target_pct in targets.items():
                 q = await get_quote(sym, exchange)
-                target_val    = capital * target_pct / 100
+                target_val = capital * target_pct / 100
                 target_shares = round(target_val / q["price"], 6) if q["price"] > 0 else 0
                 rebalanced.append({
                     "symbol": sym, "target_pct": target_pct,
@@ -368,12 +341,10 @@ async def _rebalance_loop(bot_id: str) -> None:
                     "target_shares": target_shares,
                     "price": q["price"],
                 })
-
             bot["last_check"] = _now()
             bot["stats"] = {"rebalanced": rebalanced, "capital": capital}
             bot_store.update_bot(bot)
         except Exception as e:
             bot["error"] = str(e)[:200]
             bot_store.update_bot(bot)
-
         await asyncio.sleep(interval * 60)
