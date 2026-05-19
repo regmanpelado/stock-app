@@ -19,3 +19,4 @@ stripe>=8.0.0
 pandas>=2.0.0
 yfinance>=0.2.40
 alpaca-py>=0.26.0
+ccxt>=4.3.19
