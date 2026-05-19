@@ -7,10 +7,7 @@ import uuid
 from datetime import datetime, timezone
 
 from app.services import bot_store
-from app.services.signals_service import _rsi, _macd
-from app.services.market_service import get_quote, _full_symbol
 
-import yfinance as yf
 
 _tasks: dict[str, asyncio.Task] = {}
 
@@ -152,6 +149,8 @@ def _record_trade(bot: dict, side: str, price: float, shares: float, cost: float
 
 
 def _get_closes(symbol: str, exchange: str) -> list:
+    import yfinance as yf
+    from app.services.market_service import _full_symbol
     full = _full_symbol(symbol, exchange)
     hist = yf.Ticker(full).history(period="3mo", interval="1d")
     return hist["Close"].tolist() if not hist.empty else []
@@ -173,7 +172,8 @@ async def _dca_loop(bot_id: str) -> None:
         sl_pct   = float(cfg.get("stop_loss_pct", 0))
 
         try:
-            quote  = await get_quote(symbol, exchange)
+            from app.services.market_service import get_quote as _get_quote
+            quote  = await _get_quote(symbol, exchange)
             price  = quote["price"]
             shares = round(amount / price, 6)
 
@@ -238,6 +238,7 @@ async def _momentum_loop(bot_id: str) -> None:
                 await asyncio.sleep(interval * 60)
                 continue
 
+            from app.services.signals_service import _rsi
             rsi   = _rsi(closes)
             price = closes[-1]
 
@@ -304,6 +305,7 @@ async def _signal_loop(bot_id: str) -> None:
                 await asyncio.sleep(interval * 60)
                 continue
 
+            from app.services.signals_service import _rsi, _macd
             rsi   = _rsi(closes)
             macd  = _macd(closes)
             price = closes[-1]
@@ -354,6 +356,7 @@ async def _rebalance_loop(bot_id: str) -> None:
         interval = int(cfg.get("check_interval_minutes", 1440))
 
         try:
+            from app.services.market_service import get_quote
             rebalanced = []
             for sym, target_pct in targets.items():
                 q = await get_quote(sym, exchange)

@@ -70,3 +70,19 @@ def load_all_bots() -> list[dict]:
     with get_session() as s:
         bots = s.query(Bot).order_by(Bot.created_at).all()
         return [b.to_dict() for b in bots]
+
+
+# ── Aliases usados por bot_service ────────────────────────────────────────────
+
+def save_bot(bot: dict) -> None:
+    insert_bot(bot)
+
+
+def get_bot(bot_id: str) -> dict | None:
+    with get_session() as s:
+        obj = s.get(Bot, bot_id)
+        return obj.to_dict() if obj else None
+
+
+def list_bots() -> list[dict]:
+    return load_all_bots()
